@@ -4,18 +4,28 @@ import type { EngineInterface, Register } from 'claude-code'
 import { DEFAULT_PROFILE, PROFILES, findProfile, reminder } from './profiles'
 import type { Profile } from './profiles'
 
-const STORE_KEY = 'profile'
+const PROFILE_KEY = 'profile'
+const OPEN_KEY = 'isOpen'
 
-const current = atom({ plugin: 'lingo-switch', key: 'profile' } as const, DEFAULT_PROFILE.id)
-const isOpen = atom({ plugin: 'lingo-switch', key: 'isOpen' } as const, false)
+// $.state belongs to one session, and /clear starts a new one; the store outlives both.
+// So the store holds the truth, and this counter only tells the bar to redraw.
+const revision = atom({ plugin: 'lingo-switch', key: 'revision' } as const, 0)
+
+const activeProfile = async ($: EngineInterface): Promise<Profile> =>
+  findProfile(await $.store.get(PROFILE_KEY)) ?? DEFAULT_PROFILE
+
+const isBarOpen = async ($: EngineInterface) => (await $.store.get(OPEN_KEY)) === true
+
+const save = async ($: EngineInterface, key: string, value: unknown) => {
+  await $.store.set(key, value)
+  await update($, revision, n => n + 1)
+}
 
 const choose = async ($: EngineInterface, id: string): Promise<Profile | undefined> => {
   const profile = findProfile(id)
-  if (!profile) {
-    return undefined
+  if (profile) {
+    await save($, PROFILE_KEY, profile.id)
   }
-  await update($, current, () => profile.id)
-  await $.store.set(STORE_KEY, profile.id)
 
   return profile
 }
@@ -26,8 +36,6 @@ export const register: Register = on => {
       name: 'lang',
       description: 'Pick the language Claude chats in (/lang, or /lang <id>)',
     })
-    const saved = findProfile(await $.store.get(STORE_KEY)) ?? DEFAULT_PROFILE
-    await update($, current, () => saved.id)
 
     return next(e)
   })
@@ -35,7 +43,7 @@ export const register: Register = on => {
   on('command.run', { command: 'lang' }, async ($, e) => {
     const id = e.args.trim()
     if (!id) {
-      await update($, isOpen, () => true)
+      await save($, OPEN_KEY, true)
 
       return { text: 'Language bar is up. Dismiss hides it.' }
     }
@@ -46,18 +54,17 @@ export const register: Register = on => {
       : { text: `No profile "${id}". Try: ${PROFILES.map(one => one.id).join(', ')}` }
   })
 
-  on('prompt.submit', async ($, e, next) => {
-    const profile = findProfile(await read($, current)) ?? DEFAULT_PROFILE
-
-    return next({ ...e, context: [...(e.context ?? []), reminder(profile)] })
-  })
+  on('prompt.submit', async ($, e, next) =>
+    next({ ...e, context: [...(e.context ?? []), reminder(await activeProfile($))] }),
+  )
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    if (e.props.hasSurvey || !(await read($, isOpen))) {
+    await read($, revision)
+    if (e.props.hasSurvey || !(await isBarOpen($))) {
       return next(e)
     }
-    const id = await read($, current)
-    const dismiss = () => update($, isOpen, () => false)
+    const { id } = await activeProfile($)
+    const dismiss = () => save($, OPEN_KEY, false)
     const { Box, Button, Text } = $.ui.resolve(e)
 
     return (
@@ -67,7 +74,14 @@ export const register: Register = on => {
           const digit = index < 9 ? String(index + 1) : undefined
 
           return profile.id === id ? (
-            <Button key={profile.id} label={digit ? `${digit}: ${profile.label}` : profile.label} variant="primary" onPress={() => {}} />
+            // Keeps its hotkey, so pressing the active digit is a no-op instead of typing it into the prompt.
+            <Button
+              key={profile.id}
+              label={digit ? `${digit}: ${profile.label}` : profile.label}
+              hotkey={digit}
+              variant="primary"
+              onPress={() => {}}
+            />
           ) : (
             <Button
               key={profile.id}

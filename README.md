@@ -2,17 +2,13 @@
 
 **Switch the language Claude Code chats in with one keystroke.** Type `/lang`, press a digit, and Claude's next reply comes back in Cantonese, Classical Chinese, Simplified Technical English, or pirate.
 
-```
-🌐  [ 1: English ]  2: 廣東話  3: 書面繁中  4: STE100  5: Caveman  6: 文言文  7: Pirate  8: Shakespeare  9: Yoda  0: Dismiss
-────────────────────────────────────────────────────────────────────────────
-> _
-```
+![lingo-switch demo: one session switching from English to Cantonese to pirate](assets/demo-2x.gif)
 
 lingo-switch is a Claude Code mod: a plugin of TypeScript function hooks. It has no dependencies and no build step, and it is about 200 lines.
 
 ## Install
 
-lingo-switch needs a Claude Code build that loads function-hook mods. It is tested on 2.1.292. The mod API is early access, so a later release can break it.
+lingo-switch needs a Claude Code build that loads function-hook mods. It is tested on 2.1.292 and 2.1.296. The mod API is early access, so a later release can break it.
 
 In a Claude Code terminal session, run:
 
@@ -31,7 +27,7 @@ Answer `y` to add the marketplace, then press Enter to pick the user scope. The 
 | `0` or **Dismiss** | Hides the bar |
 | `/lang pirate` | Switches directly, no bar |
 
-The active profile shows in an accent box. Your pick persists across sessions.
+The active profile shows in an accent box. Your pick and the bar stay put across `/clear` and new sessions.
 
 ## Profiles
 
@@ -97,6 +93,8 @@ claude plugin test ./claude-lingo-switch
 ```
 
 The tests cover the default profile, `/lang <id>`, the bar's press and dismiss on terminal and desktop, and the per-message note.
+
+The demo GIF comes from [`assets/demo.tape`](assets/demo.tape). Re-record it with [VHS](https://github.com/charmbracelet/vhs); the tape's header lists the setup.
 
 ## License
 

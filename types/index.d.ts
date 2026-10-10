@@ -1,7 +1,7 @@
-export type ProfileId = string
+export type Revision = number
 
 declare module 'claude-code' {
   interface PluginState {
-    'lingo-switch': { profile: ProfileId; isOpen: boolean }
+    'lingo-switch': { revision: Revision }
   }
 }
