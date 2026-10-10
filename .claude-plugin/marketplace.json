@@ -1,0 +1,13 @@
+{
+  "name": "claude-lingo-switch",
+  "description": "lingo-switch: switch the language Claude Code chats in",
+  "owner": {
+    "name": "Patrick Yip"
+  },
+  "plugins": [
+    {
+      "name": "lingo-switch",
+      "source": "./"
+    }
+  ]
+}

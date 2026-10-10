@@ -1,0 +1,10 @@
+{
+  "name": "lingo-switch",
+  "version": "0.1.0",
+  "description": "Pick the language Claude Code chats in, from Cantonese to STE100 to pirate",
+  "author": { "name": "Patrick Yip" },
+  "repository": "https://github.com/patrick-yip/claude-lingo-switch",
+  "license": "MIT",
+  "keywords": ["language", "i18n", "cantonese", "mod"],
+  "types": "./types/index.d.ts"
+}
